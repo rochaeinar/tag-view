@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
         tagView.setTagList(tagList);
         tagView.setTagBackgroundColor(getResources().getColor(R.color.colorAccent));
         tagView.setFocusable(false);
+        tagView.addTag("AlreadyAdded", false);
 
     }
 
