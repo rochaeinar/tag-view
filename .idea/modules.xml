@@ -3,8 +3,14 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/TagView.iml" filepath="$PROJECT_DIR$/TagView.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/materialtagview/materialtagview.iml" filepath="$PROJECT_DIR$/materialtagview/materialtagview.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/TagView.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/TagView.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/TagView.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/TagView.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/TagView.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/TagView.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/TagView.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/TagView.app.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/materialtagview/TagView.materialtagview.iml" filepath="$PROJECT_DIR$/.idea/modules/materialtagview/TagView.materialtagview.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/materialtagview/TagView.materialtagview.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/materialtagview/TagView.materialtagview.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/materialtagview/TagView.materialtagview.main.iml" filepath="$PROJECT_DIR$/.idea/modules/materialtagview/TagView.materialtagview.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/materialtagview/TagView.materialtagview.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/materialtagview/TagView.materialtagview.unitTest.iml" />
     </modules>
   </component>
 </project>

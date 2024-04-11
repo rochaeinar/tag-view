@@ -1,11 +1,9 @@
 package com.skyhope.tagview;
 
-import android.graphics.Color;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 
 import com.skyhope.materialtagview.TagView;
-import com.skyhope.materialtagview.enums.TagSeparator;
 
 
 public class MainActivity extends AppCompatActivity {
