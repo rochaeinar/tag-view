@@ -449,6 +449,10 @@ public class TagView extends FlexboxLayout implements TagClickListener {
         mAdapter.addTagBackgroundColor(tagBackgroundColor);
     }
 
+    public void setFocusable(boolean focusable) {
+        editText.setFocusable(focusable);
+    }
+
     /**
      * User can set background as String color
      *

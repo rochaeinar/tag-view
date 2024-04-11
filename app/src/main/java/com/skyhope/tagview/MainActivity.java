@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
         String[] tagList = new String[]{"C++", "Java", "PHP", "2 Tesalonicenses","2 Tesalonicenses"};
         tagView.setTagList(tagList);
         tagView.setTagBackgroundColor(getResources().getColor(R.color.colorAccent));
+        tagView.setFocusable(false);
 
     }
 
