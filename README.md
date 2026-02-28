@@ -145,21 +145,55 @@ tagView.removeDropdownItem("Kotlin");
 
 ---
 
-## Personalizar apariencia
+## Colores — dark / light mode
+
+El color de fondo de los chips (`tag_bg`) es configurable y tiene variante automática para dark mode:
+
+| Modo  | Default de la librería |
+|-------|------------------------|
+| Light | `#52a78b` (teal medio) |
+| Dark  | `#5BBDA0` (teal más brillante) |
+
+Para integrar el color con el tema Material3 de tu app (recomendado), resolverlo del tema en lugar de hardcodear:
 
 ```java
-tagView.setTagBackgroundColor("#1565C0");        // color hex
-tagView.setTagBackgroundColor(Color.BLUE);       // o int color
+// Java — usando MaterialColors de la librería Material Components
+int bgColor   = MaterialColors.getColor(context, com.google.android.material.R.attr.colorSecondaryContainer, Color.GRAY);
+int textColor = MaterialColors.getColor(context, com.google.android.material.R.attr.colorOnSecondaryContainer, Color.BLACK);
+
+tagView.setTagBackgroundColor(bgColor);
+tagView.setTagTextColor(textColor);
+```
+
+```kotlin
+// Kotlin
+val bgColor   = MaterialColors.getColor(context, com.google.android.material.R.attr.colorSecondaryContainer, Color.GRAY)
+val textColor = MaterialColors.getColor(context, com.google.android.material.R.attr.colorOnSecondaryContainer, Color.BLACK)
+
+tagView.setTagBackgroundColor(bgColor)
+tagView.setTagTextColor(textColor)
+```
+
+`colorSecondaryContainer` / `colorOnSecondaryContainer` son los atributos que Material3 usa para chips — se resuelven automáticamente según el modo day/night del tema activo.
+
+También se puede establecer un color fijo:
+
+```java
+tagView.setTagBackgroundColor("#1565C0");   // hex
+tagView.setTagBackgroundColor(Color.BLUE);  // int
 
 tagView.setTagTextColor("#FFFFFF");
 tagView.setTagTextColor(Color.WHITE);
+```
 
-tagView.setCrossButton(
-    ContextCompat.getDrawable(this, R.drawable.ic_close)
-);
+Otros ajustes visuales:
 
+```java
+tagView.setCrossButton(ContextCompat.getDrawable(this, R.drawable.ic_close));
 tagView.setMaximumTagLimitMessage("Límite de tags alcanzado");
 ```
+
+> **Orden:** Llamá `setTagBackgroundColor()` y `setTagTextColor()` **antes** de `addTag()` y `setTagList()` para que los chips pre-seleccionados y el dropdown ya usen el color correcto.
 
 ---
 

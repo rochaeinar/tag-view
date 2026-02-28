@@ -2,65 +2,181 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Build
+---
 
-Requires `JAVA_HOME` apuntando al JDK de Android Studio:
+## Build
 
 ```bash
 export JAVA_HOME="C:/Program Files/Android/Android Studio/jbr"
 ./gradlew :materialtagview:assembleDebug
 ```
 
-El AAR resultante queda en:
-```
-materialtagview/build/outputs/aar/materialtagview-debug.aar
-```
+AAR resultante: `materialtagview/build/outputs/aar/materialtagview-debug.aar`
 
-El módulo `:app` está excluido de `settings.gradle` (era la app de demo; no compila con AGP moderno sin migración adicional). Solo se construye `:materialtagview`.
+El módulo `:app` está excluido de `settings.gradle` (demo original, no migrada a AGP moderno). Solo se construye `:materialtagview`.
 
-## Arquitectura
+---
 
-La librería es un único módulo (`materialtagview/`) con tres capas:
+## Integración completa — CRD en Kotlin
 
-### 1. `TagView.java` — Vista principal
-Extiende `FlexboxLayout`. Es el punto de entrada público: contiene el `EditText` embebido, el `RecyclerView` del dropdown y los chips. Mantiene:
-- `mTagList` — chips activos (`List<TagModel>`)
-- `mTagItemList` — sugerencias del dropdown (sincronizado con el adapter)
-- `mAdapter` — instancia privada de `TagViewAdapter`
+Todo lo necesario para integrar la librería desde cero, sin leer ningún otro archivo.
 
-**Invariante crítico:** `setTagList()` llama a `addRecyclerView()`, que agrega `EditText + RecyclerView + TextView` como hijos del FlexboxLayout. **Llamarlo más de una vez duplica esos hijos.** Para modificar el dropdown después de la inicialización usar `removeDropdownItem()`, `mAdapter.addItem()` o `mAdapter.removeTagItem()` — nunca volver a llamar `setTagList()`.
-
-### 2. `TagViewAdapter.java` — Adapter del dropdown
-RecyclerView adapter + Filterable. Mantiene dos listas:
-- `mTagItemList` — lista filtrada actualmente visible
-- `mBackUpList` — lista completa sin filtrar (fuente de verdad para el filtro de texto)
-
-Ambas listas deben mantenerse en sincronía. `removeTagItem()` y `removeDropdownItem()` eliminan de las dos.
-
-### 3. Interfaces / modelo
-- `TagItemListener` — callbacks de chip añadido/eliminado (para el consumidor)
-- `TagClickListener` — click en item del dropdown (implementado internamente por `TagView`)
-- `TagLongClickListener` — long-press en item del dropdown (para el consumidor)
-- `TagModel` — POJO con `tagText` y `isFromList`
-
-## Flujo de inicialización correcto
-
-El orden importa. El consumidor **siempre** debe seguir esta secuencia:
-
-1. Configurar (`setHint`, `addTagSeparator`, `addTagLimit`)
-2. Registrar listeners (`initTagListener`, `initTagLongClickListener`)
-3. `addTag(name, true)` + eliminar del pool → por cada tag pre-seleccionado
-4. `setTagList(pool)` — única llamada, con el pool ya sin los pre-seleccionados
-
-## Filtro de texto
-
-El `TextWatcher` del `EditText` llama a `mAdapter.getFilter().filter(texto)` en cada keystroke. El filtro trabaja contra `mBackUpList`. Si `mTagItemList` y `mBackUpList` se dessincronizan (p. ej. por llamar `addItems()` incorrectamente), el filtro muestra resultados incorrectos.
-
-## Añadir la librería a otro proyecto
+### 1. Dependencias (`build.gradle`)
 
 ```groovy
 implementation files('libs/materialtagview-debug.aar')
-implementation 'com.google.android.flexbox:flexbox:3.0.0'  // dependencia transitiva requerida
+implementation 'com.google.android.flexbox:flexbox:3.0.0'   // REQUERIDO — TagView extiende FlexboxLayout
 ```
 
-`TagView` extiende `FlexboxLayout`; sin la dependencia de flexbox el proyecto consumidor no compila (falta el atributo `layout_maxWidth` en AAPT).
+Sin `flexbox`, AAPT falla con `attribute layout_maxWidth not found`.
+
+### 2. Layout XML
+
+```xml
+<com.skyhope.materialtagview.TagView
+    android:id="@+id/tag_view"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" />
+```
+
+No agregar `app:tag_limit` en XML — su default es **1**. Siempre controlar el límite por código.
+
+### 3. Implementación completa (Fragment/Activity en Kotlin)
+
+```kotlin
+import android.graphics.Color
+import com.google.android.material.color.MaterialColors
+import com.skyhope.materialtagview.TagView
+import com.skyhope.materialtagview.enums.TagSeparator
+import com.skyhope.materialtagview.interfaces.TagItemListener
+import com.skyhope.materialtagview.interfaces.TagLongClickListener
+import com.skyhope.materialtagview.model.TagModel
+
+// Variables de estado — mantener sincronizadas con la librería
+val availableTagNames = mutableListOf<String>()  // sugerencias en el dropdown
+val deletedTagNames   = mutableSetOf<String>()    // borrados globalmente este session
+
+fun initTagView(
+    tagView: TagView,
+    context: Context,
+    allTagNames: List<String>,          // todos los tags existentes en BD
+    preSelectedNames: List<String>      // tags ya asignados a este item
+) {
+    // ── PASO 1: configuración básica ────────────────────────────────────────
+    tagView.setHint("Add tag...")
+    tagView.addTagSeparator(TagSeparator.SPACE_SEPARATOR)  // espacio crea chip
+    tagView.addTagLimit(Int.MAX_VALUE)
+
+    // ── PASO 2: colores ANTES de addTag/setTagList ───────────────────────────
+    // Material3 DayNight — se resuelven del tema activo (day/night automático)
+    val chipBg   = MaterialColors.getColor(context, com.google.android.material.R.attr.colorSecondaryContainer, Color.GRAY)
+    val chipText = MaterialColors.getColor(context, com.google.android.material.R.attr.colorOnSecondaryContainer, Color.BLACK)
+    tagView.setTagBackgroundColor(chipBg)
+    tagView.setTagTextColor(chipText)
+
+    // ── PASO 3: listeners ────────────────────────────────────────────────────
+    tagView.initTagListener(object : TagItemListener {
+        override fun onGetAddedItem(tagModel: TagModel) {
+            if (tagModel.isFromList) availableTagNames.remove(tagModel.tagText.trim())
+        }
+        override fun onGetRemovedItem(tagModel: TagModel) {
+            if (tagModel.isFromList) availableTagNames.add(tagModel.tagText.trim())
+        }
+    })
+
+    // DELETE — long-press en sugerencia del dropdown
+    tagView.initTagLongClickListener(TagLongClickListener { _, tagText ->
+        AlertDialog.Builder(context)
+            .setTitle("Delete tag")
+            .setMessage("Delete \"$tagText\" from all notes?")
+            .setPositiveButton("Delete") { _, _ ->
+                deletedTagNames.add(tagText)
+                availableTagNames.remove(tagText)
+                tagView.removeDropdownItem(tagText)   // quita del dropdown sin reinicializar
+                // → persistir borrado en BD al guardar
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    })
+
+    // ── PASO 4: chips pre-seleccionados (CREATE desde BD) ────────────────────
+    val pool = allTagNames.toMutableList()
+    for (name in preSelectedNames) {
+        tagView.addTag(name, true)   // true = viene de la lista
+        pool.remove(name)
+    }
+
+    // ── PASO 5: cargar sugerencias — UNA SOLA VEZ ────────────────────────────
+    availableTagNames.addAll(pool)
+    tagView.setTagList(ArrayList(pool.sorted()))
+    // ¡NUNCA volver a llamar setTagList()! Duplica hijos en el FlexboxLayout.
+}
+```
+
+### 4. READ — obtener tags seleccionados al guardar
+
+```kotlin
+// Leer en el hilo principal ANTES de entrar a IO
+val tagsToSave = tagView.getSelectedTags()
+    .map { it.tagText.trim() }
+    .filter { it.isNotEmpty() }
+
+// En IO:
+// - Procesar deletedTagNames primero (borrar de BD y asociaciones)
+// - Luego reemplazar asociaciones del item actual con tagsToSave
+// - Crear tags nuevos (los que no existen en BD) con tagRepo.findByName / saveNew
+```
+
+### 5. DELETE — persistencia al guardar
+
+```kotlin
+// Kotlin name-shadowing trap: capturar IDs fuera del apply{}
+for (name in deletedTagNames) {
+    val tag = tagRepo.findByName(name) ?: continue
+    val tagId = tag.id                             // capturar ANTES del apply
+    // marcar como eliminado en BD
+    // actualizar campo .tags (string denormalizado) en todos los items afectados
+}
+```
+
+---
+
+## Invariantes críticos
+
+| Regla | Consecuencia si se viola |
+|---|---|
+| `setTagList()` se llama exactamente una vez | Segunda llamada duplica `EditText + RecyclerView + TextView` en el layout |
+| Colores **antes** de `addTag()` y `setTagList()` | Chips pre-seleccionados y `textViewAdd` quedan con el color incorrecto |
+| `removeDropdownItem()` para quitar del dropdown post-init | `setTagList()` no puede usarse post-init (viola la regla anterior) |
+| `availableTagNames` se mantiene en sync con el adapter | Estado diverge: se muestra como disponible lo que ya no existe |
+
+---
+
+## Arquitectura interna (para modificar la librería)
+
+```
+TagView.java          — FlexboxLayout público. Contiene EditText + RecyclerView + textViewAdd.
+                        mAdapter es privado; exponerlo requiere métodos nuevos en TagView.
+TagViewAdapter.java   — RecyclerView.Adapter + Filterable. Dos listas:
+                          mTagItemList  (filtrada, visible)
+                          mBackUpList   (completa, fuente del filtro de texto)
+                        Ambas deben estar en sync. removeDropdownItem() elimina de las dos.
+interfaces/
+  TagItemListener       — chip añadido/eliminado (para el consumidor)
+  TagLongClickListener  — long-press en item del dropdown (para el consumidor)
+  TagClickListener      — click en dropdown (implementado internamente por TagView, no exponer)
+model/TagModel          — tagText: String, isFromList: Boolean
+```
+
+El `TextWatcher` del `EditText` filtra el dropdown llamando `mAdapter.getFilter().filter(texto)` en cada keystroke, contra `mBackUpList`.
+
+---
+
+## Colores — defaults de la librería
+
+| Modo  | `tag_bg` |
+|-------|----------|
+| Light | `#52a78b` (teal medio) — `values/colors.xml` |
+| Dark  | `#5BBDA0` (teal brillante) — `values-night/colors.xml` |
+
+Android resuelve el recurso correcto automáticamente. El consumidor puede sobreescribir con `setTagBackgroundColor()` / `setTagTextColor()` (ver paso 2 arriba).

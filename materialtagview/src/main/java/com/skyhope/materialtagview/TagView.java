@@ -327,7 +327,10 @@ public class TagView extends FlexboxLayout implements TagClickListener {
 
         textViewAdd.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         textViewAdd.setGravity(Gravity.CENTER);
-        textViewAdd.setPadding(4, 0, 4, 0);
+        float density = getResources().getDisplayMetrics().density;
+        int hPad = Math.round(9 * density);
+        int vPad = Math.round(6 * density);
+        textViewAdd.setPadding(hPad, vPad, hPad, vPad);
         textViewAdd.setBackground(getResources().getDrawable(R.drawable.drawable_tag));
 
         GradientDrawable drawable = (GradientDrawable) textViewAdd.getBackground();

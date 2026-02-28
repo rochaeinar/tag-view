@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brighter teal so chips remain legible on dark backgrounds -->
+    <color name="tag_bg">#5BBDA0</color>
+</resources>
