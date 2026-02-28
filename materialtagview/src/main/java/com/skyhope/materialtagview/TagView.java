@@ -30,6 +30,7 @@ import com.skyhope.materialtagview.adapter.TagViewAdapter;
 import com.skyhope.materialtagview.enums.TagSeparator;
 import com.skyhope.materialtagview.interfaces.TagClickListener;
 import com.skyhope.materialtagview.interfaces.TagItemListener;
+import com.skyhope.materialtagview.interfaces.TagLongClickListener;
 import com.skyhope.materialtagview.model.TagModel;
 
 import java.util.ArrayList;
@@ -526,6 +527,27 @@ public class TagView extends FlexboxLayout implements TagClickListener {
      */
     public void initTagListener(TagItemListener listener) {
         mTagItemListener = listener;
+    }
+
+    /**
+     * Register a long-click listener on dropdown list items.
+     * Called when the user long-presses a tag in the suggestion list.
+     *
+     * @param listener {@link TagLongClickListener}
+     */
+    public void initTagLongClickListener(TagLongClickListener listener) {
+        mAdapter.setTagLongClickListener(listener);
+    }
+
+    /**
+     * Remove a single item from the dropdown list by its text value.
+     * Does not trigger a full re-initialization of the view.
+     *
+     * @param tagText The tag text to remove from the dropdown
+     */
+    public void removeDropdownItem(String tagText) {
+        mAdapter.removeDropdownItem(tagText);
+        mTagItemList.remove(tagText);
     }
 
     /**

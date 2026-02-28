@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import com.skyhope.materialtagview.R;
 import com.skyhope.materialtagview.interfaces.TagClickListener;
+import com.skyhope.materialtagview.interfaces.TagLongClickListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +41,8 @@ public class TagViewAdapter extends RecyclerView.Adapter<TagViewAdapter.TagViewH
     private int mTagBackgroundColor;
 
     private TagClickListener mClickListener;
+
+    private TagLongClickListener mLongClickListener;
 
     public TagViewAdapter(int mTagTextColor, int mTagBackgroundColor) {
         this.mTagTextColor = mTagTextColor;
@@ -110,6 +113,23 @@ public class TagViewAdapter extends RecyclerView.Adapter<TagViewAdapter.TagViewH
         mClickListener = listener;
     }
 
+    public void setTagLongClickListener(TagLongClickListener listener) {
+        mLongClickListener = listener;
+    }
+
+    /**
+     * Remove an item from the dropdown by its text value.
+     * Removes from both the filtered list and the backup list.
+     */
+    public void removeDropdownItem(String tagText) {
+        int pos = mTagItemList.indexOf(tagText);
+        if (pos >= 0) {
+            mTagItemList.remove(pos);
+            notifyItemRemoved(pos);
+        }
+        mBackUpList.remove(tagText);
+    }
+
     /**
      * Remove item When user select a Tag from list
      *
@@ -156,7 +176,7 @@ public class TagViewAdapter extends RecyclerView.Adapter<TagViewAdapter.TagViewH
         };
     }
 
-    class TagViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    class TagViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         TextView textViewTag;
         LinearLayout tagContainer;
 
@@ -166,6 +186,7 @@ public class TagViewAdapter extends RecyclerView.Adapter<TagViewAdapter.TagViewH
             tagContainer = itemView.findViewById(R.id.tag_container);
 
             itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
         }
 
         @Override
@@ -173,6 +194,15 @@ public class TagViewAdapter extends RecyclerView.Adapter<TagViewAdapter.TagViewH
             if (mClickListener != null) {
                 mClickListener.onGetSelectTag(getAdapterPosition(), mTagItemList.get(getAdapterPosition()));
             }
+        }
+
+        @Override
+        public boolean onLongClick(View view) {
+            if (mLongClickListener != null) {
+                mLongClickListener.onTagLongClick(getAdapterPosition(), mTagItemList.get(getAdapterPosition()));
+                return true;
+            }
+            return false;
         }
     }
 }
