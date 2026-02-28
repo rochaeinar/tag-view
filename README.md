@@ -1,112 +1,283 @@
-[![Release](https://jitpack.io/v/mahimrocky/TagView.svg)](https://github.com/mahimrocky/TagView/releases/tag/1.0.3)
-# TagView
+# MaterialTagView
 
-This libirary help to pick up Text as Tag. Like **Skill** selection or other things what you want. You can call it **Tag with EditText** You can select specicfic text from showing list or from editText text. Easy to us and Simple library
+Widget de entrada de tags para Android. El usuario escribe texto, presiona un separador para crear un chip, y puede elegir de una lista de sugerencias predefinida.
 
-Sample
-<p align="center">
-  <img src="https://github.com/mahimrocky/TagView/blob/master/screenshot_3.png" width="200" height="400" />
-  <img src="https://github.com/mahimrocky/TagView/blob/master/screenshot_2.png" width="200" height="400" /> 
-</p> 
+---
 
-# Root Gradle
-```sh
-    allprojects {
-		repositories {
-			...
-			maven { url 'https://jitpack.io' }
-		}
-	}
-```
+## Setup
 
-# App Gradle:
+Copia `materialtagview-debug.aar` en `app/libs/` y agrega en `build.gradle`:
 
-you have to add below two dependency. Because library was build on **flexbox**
-
-```sh
+```groovy
 dependencies {
-           implementation 'com.google.android:flexbox:1.0.0'
-	   implementation 'com.github.mahimrocky:TagView:1.0.3'
-	}
-```
-Ok Now starts **Implementation** part. You have to set just follwoing **xml**
-**Note:** No need to add extra Edit text for Tag selection. The xml file will auto provide
-
-```sh
-    <com.skyhope.materialtagview.TagView
-        android:id="@+id/text_view_show_more"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        />
+    implementation files('libs/materialtagview-debug.aar')
+    implementation 'com.google.android.flexbox:flexbox:3.0.0'
+}
 ```
 
-**And now here we wil discuss how we can use different property**
+---
 
-In Activity you can use like:
-```sh
-    TagView tagView = findViewById(R.id.tag_view_test);
-```
-User can set **Tag** in two way
-1.Typing text and enter **Special Character**
-2.Select item from provided list
+## Layout XML
 
-So if you want to provide String list you can predefine Tag list by using:
-
-```sh
-    tagView.addTagSeparator(TagSeparator.AT_SEPARATOR); // @ seprator
+```xml
+<com.skyhope.materialtagview.TagView
+    android:id="@+id/tag_view"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:tag_separator="SPACE_SEPARATOR"
+    app:tag_text_color="@color/white"
+    app:tag_background_color="@color/teal_200" />
 ```
 
-or in XML you can set
+### Atributos XML disponibles
 
-```sh
-    app:tag_separator="HASH_SEPARATOR" // Hash seperator
+| Atributo              | Valores posibles                                                                                   | Default              |
+|-----------------------|----------------------------------------------------------------------------------------------------|----------------------|
+| `tag_separator`       | `COMMA_SEPARATOR`, `SPACE_SEPARATOR`, `PLUS_SEPARATOR`, `MINUS_SEPARATOR`, `AT_SEPARATOR`, `HASH_SEPARATOR` | `COMMA_SEPARATOR` |
+| `tag_text_color`      | color                                                                                              | blanco               |
+| `tag_background_color`| color                                                                                              | teal                 |
+| `tag_limit`           | entero                                                                                             | **1**                |
+| `close_icon`          | referencia a drawable                                                                              | X integrada          |
+| `limit_error_text`    | string                                                                                             | "You reach maximum tags" |
+
+> **Atención:** `tag_limit` tiene default **1** desde XML. Si no querés límite, siempre llamá `addTagLimit(Integer.MAX_VALUE)` en código.
+
+---
+
+## Uso básico
+
+```java
+TagView tagView = findViewById(R.id.tag_view);
+
+tagView.setHint("Agregar tag...");
+tagView.addTagSeparator(TagSeparator.SPACE_SEPARATOR);
+tagView.addTagLimit(Integer.MAX_VALUE);
+
+List<String> sugerencias = Arrays.asList("Android", "Kotlin", "Java", "iOS");
+tagView.setTagList(new ArrayList<>(sugerencias));
 ```
 
-**To get Tag add or Remove listener**
+---
 
-```sh
-    tagView.initTagListener(TagItemListener listener); // You can implement it
-```
-**To get selected tag**
+## Pre-seleccionar tags (chips iniciales)
 
-```sh
-    tagView.getSelectedTags();// that will return TagModel List
-```
+Llamá `addTag()` por cada tag que ya debe aparecer como chip **antes** de llamar `setTagList()`.
+Eliminá esos tags del pool de sugerencias para que no aparezcan duplicados en el dropdown.
 
-There are following property that you can use in **XML** section
+```java
+List<String> todos = new ArrayList<>(Arrays.asList("Android", "Kotlin", "Java", "iOS"));
+List<String> seleccionados = Arrays.asList("Kotlin", "Java");
 
-| Attributes | Purpose |
-| ------ | ------ |
-| ```app:tag_text_color```|  To change Tag text color|
-| ```app:tag_background_color```|  To change Tag Background color|
-| ```app:tag_limit```|  To set how many tag will set|
-| ```app:close_icon```|  To set remove button of each tag|
-| ```app:limit_error_text```|  To set message if tag reach its limit|
-| ```app:tag_separator```|  To set **Special Character** that entering in EditText will create a tag|
+// 1. Agregar chips primero
+for (String nombre : seleccionados) {
+    tagView.addTag(nombre, true); // true = viene de la lista
+    todos.remove(nombre);
+}
 
-**How you can set predefine tag list?**
-You can set List of String or array of String
-
-```sh
-String[] tagList = new String[]{"Hello1", "Hello2", "Hello3"};
-tagView.setTagList(tagList);
-
+// 2. Cargar el resto como sugerencias
+tagView.setTagList(new ArrayList<>(todos));
 ```
 
-**The following methods to change property of tag**
+---
 
-| Mtehod Name | Purpose |
-| ------ | ------ |
-| ```addTagLimit(int limit)```|  To set Tag limit|
-| ```setTagBackgroundColor(int color)```|  To set Tag background color|
-| ```setTagBackgroundColor(String color)```|  To set Tag background color|
-| ```setTagTextColor(int color)```|  To set Tag text color|
-| ```setTagTextColor(String color)```| To set Tag text color|
-| ```setMaximumTagLimitMessage(String message)```|  To set Tag limit warning message|
-| ```setCrossButton(Drawable crossDrawable)```|  To set Tag remove button|
-| ```setCrossButton(Bitmap crossBitmap)```|  To set Tag remove button|
-| ```setTagList(List<String> tagList)```|  To set Predefine Tag list|
-| ```setTagList(String... tagList)```|  To set Predefine Tag list as String array|
-| ```getSelectedTags()```|  To get all selected TagList
+## Escuchar cuando se agrega o elimina un chip
 
-# Happy Coding
+```java
+tagView.initTagListener(new TagItemListener() {
+    @Override
+    public void onGetAddedItem(TagModel tagModel) {
+        String tag = tagModel.getTagText();
+        boolean deListado = tagModel.isFromList();
+        // el chip fue agregado
+    }
+
+    @Override
+    public void onGetRemovedItem(TagModel tagModel) {
+        String tag = tagModel.getTagText();
+        // el chip fue eliminado (usuario tocó la X)
+        // si isFromList() == true, la librería lo devuelve al dropdown automáticamente
+    }
+});
+```
+
+---
+
+## Leer los tags seleccionados
+
+```java
+List<TagModel> seleccionados = tagView.getSelectedTags();
+
+for (TagModel model : seleccionados) {
+    String texto    = model.getTagText();   // el string del tag
+    boolean deLista = model.isFromList();   // true = provino del listado de sugerencias
+}
+```
+
+---
+
+## Long-press en una sugerencia para eliminarla
+
+```java
+tagView.initTagLongClickListener(new TagLongClickListener() {
+    @Override
+    public void onTagLongClick(int position, String tagText) {
+        new AlertDialog.Builder(context)
+            .setTitle("Eliminar tag")
+            .setMessage("¿Eliminar \"" + tagText + "\" de forma permanente?")
+            .setPositiveButton("Eliminar", (dialog, which) -> {
+                tagView.removeDropdownItem(tagText); // lo quita del dropdown
+                eliminarTagDeBaseDeDatos(tagText);   // tu lógica de persistencia
+            })
+            .setNegativeButton("Cancelar", null)
+            .show();
+    }
+});
+```
+
+---
+
+## Eliminar una sugerencia por código
+
+```java
+// Quita el ítem del dropdown sin reinicializar la vista
+tagView.removeDropdownItem("Kotlin");
+```
+
+---
+
+## Personalizar apariencia
+
+```java
+tagView.setTagBackgroundColor("#1565C0");        // color hex
+tagView.setTagBackgroundColor(Color.BLUE);       // o int color
+
+tagView.setTagTextColor("#FFFFFF");
+tagView.setTagTextColor(Color.WHITE);
+
+tagView.setCrossButton(
+    ContextCompat.getDrawable(this, R.drawable.ic_close)
+);
+
+tagView.setMaximumTagLimitMessage("Límite de tags alcanzado");
+```
+
+---
+
+## Ejemplo completo (Activity)
+
+```java
+public class TagActivity extends AppCompatActivity {
+
+    private TagView tagView;
+    private List<String> availableTags = new ArrayList<>();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_tag);
+
+        tagView = findViewById(R.id.tag_view);
+
+        // Configuración
+        tagView.setHint("Agregar tag...");
+        tagView.addTagSeparator(TagSeparator.SPACE_SEPARATOR);
+        tagView.addTagLimit(Integer.MAX_VALUE);
+
+        // Callbacks de chip
+        tagView.initTagListener(new TagItemListener() {
+            @Override
+            public void onGetAddedItem(TagModel tagModel) {
+                if (tagModel.isFromList()) {
+                    availableTags.remove(tagModel.getTagText());
+                }
+            }
+
+            @Override
+            public void onGetRemovedItem(TagModel tagModel) {
+                if (tagModel.isFromList()) {
+                    availableTags.add(tagModel.getTagText());
+                }
+            }
+        });
+
+        // Long-press en sugerencia → confirmar borrado
+        tagView.initTagLongClickListener((position, tagText) -> {
+            new AlertDialog.Builder(this)
+                .setTitle("Eliminar tag")
+                .setMessage("¿Eliminar \"" + tagText + "\" de todas las notas?")
+                .setPositiveButton("Eliminar", (d, w) -> {
+                    availableTags.remove(tagText);
+                    tagView.removeDropdownItem(tagText);
+                    eliminarTagDeDB(tagText);
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+        });
+
+        cargarTags();
+    }
+
+    private void cargarTags() {
+        List<String> todos      = obtenerTagsDeBD();      // ej: ["Android","Kotlin","Java"]
+        List<String> asignados  = obtenerTagsDeLaNota();  // ej: ["Kotlin"]
+
+        // Agregar chips pre-seleccionados
+        for (String nombre : asignados) {
+            tagView.addTag(nombre, true);
+            todos.remove(nombre);
+        }
+
+        // Cargar sugerencias restantes
+        availableTags.addAll(todos);
+        tagView.setTagList(new ArrayList<>(availableTags));
+    }
+
+    private void guardar() {
+        List<TagModel> tags = tagView.getSelectedTags();
+        for (TagModel model : tags) {
+            guardarTagParaNota(model.getTagText());
+        }
+    }
+}
+```
+
+---
+
+## Referencia de API
+
+| Método | Descripción |
+|---|---|
+| `setHint(String)` | Texto de hint en el campo de entrada |
+| `addTagSeparator(TagSeparator)` | Carácter que dispara la creación de un chip |
+| `addTagLimit(int)` | Cantidad máxima de chips (`Integer.MAX_VALUE` = sin límite) |
+| `setTagList(List<String>)` | Carga el dropdown de sugerencias (llamar una sola vez, después de `addTag`) |
+| `addTag(String, boolean)` | Agrega un chip por código; `true` si proviene de la lista |
+| `removeDropdownItem(String)` | Elimina un ítem del dropdown sin reinicializar la vista |
+| `getSelectedTags()` | Devuelve `List<TagModel>` con los chips actuales |
+| `initTagListener(TagItemListener)` | Callback para eventos de agregar / eliminar chip |
+| `initTagLongClickListener(TagLongClickListener)` | Callback para long-press en un ítem del dropdown |
+| `setTagBackgroundColor(int\|String)` | Color de fondo de los chips |
+| `setTagTextColor(int\|String)` | Color de texto de los chips |
+| `setCrossButton(Drawable\|Bitmap)` | Ícono personalizado del botón eliminar en cada chip |
+| `setMaximumTagLimitMessage(String)` | Mensaje Toast cuando se alcanza el límite |
+
+---
+
+## Interfaces
+
+**TagItemListener** — chip agregado o eliminado:
+```java
+void onGetAddedItem(TagModel tagModel);
+void onGetRemovedItem(TagModel tagModel);
+```
+
+**TagLongClickListener** — long-press en sugerencia del dropdown:
+```java
+void onTagLongClick(int position, String tagText);
+```
+
+**TagModel**:
+```java
+String getTagText()    // el string del tag
+boolean isFromList()   // true = provino del dropdown de sugerencias
+```
